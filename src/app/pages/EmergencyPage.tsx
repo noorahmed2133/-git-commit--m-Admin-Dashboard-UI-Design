@@ -2,63 +2,22 @@ import { AlertCircle, MapPin, Clock, Phone } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import { EmptyState } from '../components/ui/EmptyState';
-
-interface EmergencyCase {
-  id: number;
-  patient: string;
-  type: string;
-  location: string;
-  time: string;
-  priority: 'Critical' | 'High' | 'Medium';
-  contactNumber: string;
-  description: string;
-}
-
-const emergencyCases: EmergencyCase[] = [
-  {
-    id: 1,
-    patient: 'John Anderson',
-    type: 'Cardiac Emergency',
-    location: 'Room 305, Building A',
-    time: '2 mins ago',
-    priority: 'Critical',
-    contactNumber: '+1 234-567-3001',
-    description: 'Patient experiencing severe chest pain and shortness of breath',
-  },
-  {
-    id: 2,
-    patient: 'Maria Garcia',
-    type: 'Respiratory Distress',
-    location: 'ICU Ward 2',
-    time: '8 mins ago',
-    priority: 'High',
-    contactNumber: '+1 234-567-3002',
-    description: 'Difficulty breathing, oxygen saturation dropping',
-  },
-  {
-    id: 3,
-    patient: 'Thomas Lee',
-    type: 'Severe Pain',
-    location: 'Emergency Room 1',
-    time: '15 mins ago',
-    priority: 'Medium',
-    contactNumber: '+1 234-567-3003',
-    description: 'Acute abdominal pain, requires immediate assessment',
-  },
-];
+import { useDashboard } from '../hooks/useApi';
 
 export function EmergencyPage() {
+  const { data, loading } = useDashboard();
+
+  const totalSOS = data?.data?.SOS ?? 0;
+  const pendingDoctors = data?.data?.pendingDoctors ?? 0;
+
+  const emergencyCases = data?.data?.emergencyCases ?? [];
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Critical':
-        return 'border-red-500 bg-red-50';
-      case 'High':
-        return 'border-orange-500 bg-orange-50';
-      case 'Medium':
-        return 'border-yellow-500 bg-yellow-50';
-      default:
-        return 'border-gray-500 bg-gray-50';
+      case 'Critical': return 'border-red-500 bg-red-50';
+      case 'High': return 'border-orange-500 bg-orange-50';
+      case 'Medium': return 'border-yellow-500 bg-yellow-50';
+      default: return 'border-gray-500 bg-gray-50';
     }
   };
 
@@ -72,30 +31,64 @@ export function EmergencyPage() {
         <p className="text-sm text-red-700">Critical cases requiring immediate medical attention</p>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <Card>
+          <div className="p-6 flex items-center gap-4">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+              <AlertCircle className="text-red-600" size={32} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Total SOS Cases</p>
+              <p className="text-4xl text-red-600">
+                {loading ? <span className="animate-pulse bg-gray-200 rounded w-16 h-8 inline-block" /> : totalSOS}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="p-6 flex items-center gap-4">
+            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
+              <AlertCircle className="text-yellow-600" size={32} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Pending Doctors</p>
+              <p className="text-4xl text-yellow-600">
+                {loading ? <span className="animate-pulse bg-gray-200 rounded w-16 h-8 inline-block" /> : pendingDoctors}
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
       {emergencyCases.length === 0 ? (
         <Card>
-          <EmptyState
-            icon={<AlertCircle size={32} />}
-            title="No active emergencies"
-            description="All emergency cases have been resolved"
-          />
+          <div className="p-12 flex flex-col items-center justify-center text-center">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="text-green-500" size={40} />
+            </div>
+            <h2 className="text-lg text-gray-700 mb-2">No Active Emergency Cases</h2>
+            <p className="text-sm text-gray-500">All emergency cases have been resolved</p>
+            <div className="mt-4 px-4 py-2 bg-green-50 rounded-lg">
+              <p className="text-sm text-green-600">Total SOS reported: <span className="font-semibold">{totalSOS}</span></p>
+            </div>
+          </div>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {emergencyCases.map((emergency) => (
-            <Card key={emergency.id} className={`border-l-4 ${getPriorityColor(emergency.priority)}`}>
+          {emergencyCases.map((emergency: any) => (
+            <Card key={emergency._id || emergency.id} className={`border-l-4 ${getPriorityColor(emergency.priority)}`}>
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <AlertCircle className="text-red-600" size={20} />
-                      <h3 className="text-lg">{emergency.patient}</h3>
+                      <h3 className="text-lg">{emergency.patient || emergency.patientName}</h3>
                     </div>
                     <p className="text-sm text-gray-600">{emergency.type}</p>
                   </div>
                   <Badge status={emergency.priority}>{emergency.priority}</Badge>
                 </div>
-
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <MapPin size={16} />
@@ -105,17 +98,13 @@ export function EmergencyPage() {
                     <Clock size={16} />
                     <span>{emergency.time}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone size={16} />
-                    <span>{emergency.contactNumber}</span>
-                  </div>
+                  {emergency.contactNumber && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Phone size={16} />
+                      <span>{emergency.contactNumber}</span>
+                    </div>
+                  )}
                 </div>
-
-                <div className="bg-white p-3 rounded-lg mb-4">
-                  <p className="text-xs text-gray-500 mb-1">Description</p>
-                  <p className="text-sm text-gray-700">{emergency.description}</p>
-                </div>
-
                 <div className="flex gap-2">
                   <Button variant="danger" className="flex-1">
                     <AlertCircle size={16} className="mr-2" />
@@ -139,42 +128,24 @@ export function EmergencyPage() {
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white text-sm">
-                  DR
+              {[
+                { initials: 'DR', name: 'Dr. Robert Kim', role: 'Emergency Medicine' },
+                { initials: 'JC', name: 'Nurse Jane Cooper', role: 'ICU Specialist' },
+                { initials: 'MJ', name: 'Paramedic Mike Johnson', role: 'First Responder' },
+              ].map((member) => (
+                <div key={member.name} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white text-sm">
+                    {member.initials}
+                  </div>
+                  <div>
+                    <p className="text-sm">{member.name}</p>
+                    <p className="text-xs text-gray-600">{member.role}</p>
+                  </div>
+                  <div className="ml-auto">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm">Dr. Robert Kim</p>
-                  <p className="text-xs text-gray-600">Emergency Medicine</p>
-                </div>
-                <div className="ml-auto">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white text-sm">
-                  JN
-                </div>
-                <div>
-                  <p className="text-sm">Nurse Jane Cooper</p>
-                  <p className="text-xs text-gray-600">ICU Specialist</p>
-                </div>
-                <div className="ml-auto">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white text-sm">
-                  MP
-                </div>
-                <div>
-                  <p className="text-sm">Paramedic Mike Johnson</p>
-                  <p className="text-xs text-gray-600">First Responder</p>
-                </div>
-                <div className="ml-auto">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </Card>

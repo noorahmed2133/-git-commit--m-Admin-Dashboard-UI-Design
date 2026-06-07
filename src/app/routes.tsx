@@ -6,22 +6,25 @@ import { DoctorsPage } from "./pages/DoctorsPage";
 import { PatientsPage } from "./pages/PatientsPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { EmergencyPage } from "./pages/EmergencyPage";
-import { SettingsPage } from "./pages/SettingsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { LoginPage } from "./pages/LoginPage";
 
 export const router = createBrowserRouter([
   {
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
     path: "/",
-    Component: DashboardLayout,
+    element: <DashboardLayout />,
     children: [
-      { index: true, Component: DashboardPage },
-      { path: "users", Component: UsersPage },
-      { path: "doctors", Component: DoctorsPage },
-      { path: "patients", Component: PatientsPage },
-      { path: "reports", Component: ReportsPage },
-      { path: "emergency", Component: EmergencyPage },
-      { path: "settings", Component: SettingsPage },
-      { path: "*", Component: NotFoundPage },
+      { index: true, element: <DashboardPage /> },
+      { path: "users", element: <UsersPage /> },
+      { path: "doctors", element: <DoctorsPage /> },
+      { path: "patients", element: <PatientsPage /> },
+      { path: "reports", element: <ReportsPage /> },
+      { path: "emergency", element: <EmergencyPage /> },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);
